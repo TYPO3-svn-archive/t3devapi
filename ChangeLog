@@ -1,6 +1,24 @@
+2011-05-16 CERDAN Yohann  <cerdanyohann@yahoo.fr>
+	* Add class.tx_t3devapi_pibase.php
+2011-04-28 CERDAN Yohann  <cerdanyohann@yahoo.fr>
+    * Small updates
+2011-03-08 CERDAN Yohann  <cerdanyohann@yahoo.fr>
+    * Some sql_free_result() missed
+2011-02-22 CERDAN Yohann  <cerdanyohann@yahoo.fr>
+	* Improvements on tx_t3devapi_database
+2011-02-08 CERDAN Yohann  <cerdanyohann@yahoo.fr>
+    * Add the tx_t3devapi_database class that allow you to get all the data according to the TCA (datetime,relation, etc...) from a sql ressource
+2011-02-08 CERDAN Yohann  <cerdanyohann@yahoo.fr>
+    * Some improvements
+    * Add class.tx_t3devapi_befunc.php & class.tx_t3devapi_export.php
+2011-01-20 CERDAN Yohann  <cerdanyohann@yahoo.fr>
+	* phpDocs & phpBeautifier
+	* Add method : loadTypoScriptForBEModule
+2010-12-28 CERDAN Yohann  <cerdanyohann@yahoo.fr>
+    * Bugfix : priority between flexform and typoscript
 2010-09-12 CERDAN Yohann  <cerdanyohann@yahoo.fr>
 	* initial upload to the TYPO3 forge
 	* clean some comments
-
+	* add a custom method "renderSelect" to generate a <select>
 2009-10-14 CERDAN Yohann  <cerdanyohann@yahoo.fr>
 	* initial release
