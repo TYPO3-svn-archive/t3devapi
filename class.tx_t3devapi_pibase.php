@@ -41,8 +41,7 @@ class tx_t3devapi_pibase extends tslib_pibase
 	public $template = null;
 	public $misc = null;
 
-	public function init()
-	{
+	public function init() {
 		// load ll and piVars
 		$this->pi_setPiVarDefaults();
 		$this->pi_loadLL();
@@ -77,8 +76,7 @@ class tx_t3devapi_pibase extends tslib_pibase
 
 	/*************************************** DB ***************************************/
 
-	public function getRecord($from, $uid, $select = '*')
-	{
+	public function getRecord($from, $uid, $select = '*') {
 		$query['SELECT'] = $select;
 		$query['FROM'] = $from;
 		$query['WHERE'] = 'uid=' . intval($uid);
@@ -88,8 +86,7 @@ class tx_t3devapi_pibase extends tslib_pibase
 		return $row;
 	}
 
-	public function getEnableFields($table, $addWhere = '')
-	{
+	public function getEnableFields($table, $addWhere = '') {
 		$content = '1=1';
 		$content .= ' ' . $this->cObj->enableFields($table);
 		$content .= (empty($this->conf['pidList']) === false) ? ' AND ' . $table . '.pid IN (' . $this->conf['pidList'] . ')' : '';
@@ -97,16 +94,14 @@ class tx_t3devapi_pibase extends tslib_pibase
 		return $content;
 	}
 
-	public function getOrderBy($orderBy = '', $ascDesc = '')
-	{
+	public function getOrderBy($orderBy = '', $ascDesc = '') {
 		$content = '';
 		$content .= (empty($orderBy) === false) ? $orderBy : '';
 		$content .= (empty($orderBy) === false) ? ' ' . $ascDesc : '';
 		return $content;
 	}
 
-	public function getLimit($limit = '', $start = '')
-	{
+	public function getLimit($limit = '', $start = '') {
 		$content = '';
 		$content .= (empty($limit) === false) ? $limit : '';
 		if (empty($start) === false) {
@@ -119,8 +114,7 @@ class tx_t3devapi_pibase extends tslib_pibase
 		return $content;
 	}
 
-	public function getListPageBrowser()
-	{
+	public function getListPageBrowser() {
 		$this->conf['records']['pagebrowsernbrecords'] = $this->conf['pageBrowserNbRecords'];
 		$this->conf['records']['nbpages'] = ceil(intval($this->conf['records']['nbrecordsall']) / intval($this->conf['pageBrowserNbRecords']));
 		$this->conf['records']['offset'] = isset($this->piVars['page']) ? $this->piVars['page'] * $this->conf['pageBrowserNbRecords'] : 0;
@@ -130,14 +124,12 @@ class tx_t3devapi_pibase extends tslib_pibase
 
 	/*************************************** PROFILE ***************************************/
 
-	public function profileStart()
-	{
+	public function profileStart() {
 		$this->profile['parsetime'] = microtime(true);
 		$this->profile['mem'] = tx_t3devapi_miscellaneous::getMemoryUsage();
 	}
 
-	public function profileStop()
-	{
+	public function profileStop() {
 		$content = '';
 		$this->profile['parsetime'] = (microtime(true) - $this->profile['parsetime']) . ' ms';
 		$this->profile['mem'] = tx_t3devapi_miscellaneous::getMemoryUsage() - $this->profile['mem'] . ' ko (total:' . tx_t3devapi_miscellaneous::getMemoryUsage() . 'ko)';
@@ -147,8 +139,7 @@ class tx_t3devapi_pibase extends tslib_pibase
 
 	/*************************************** PAGEBROWSER (with tx_pagebrowse_pi1) ***************************************/
 
-	function getHTMLPageBrowser($numberOfPages)
-	{
+	function getHTMLPageBrowser($numberOfPages) {
 		$conf = $GLOBALS['TSFE']->tmpl->setup['plugin.']['tx_pagebrowse_pi1.'];
 		$conf += array(
 			'pageParameterName' => $this->prefixId . '|page',
@@ -161,22 +152,19 @@ class tx_t3devapi_pibase extends tslib_pibase
 
 	/*************************************** TEMPLATE ***************************************/
 
-	public function addTemplate($path)
-	{
+	public function addTemplate($path) {
 		$this->template->initTemplate(trim($path), $this->conf['debug']);
 	}
 
 	/*************************************** CSS ***************************************/
 
-	public function addCSS($path)
-	{
+	public function addCSS($path) {
 		$GLOBALS['TSFE']->pSetup['includeCSS.'] [] = trim($path);
 	}
 
 	/*************************************** JS ***************************************/
 
-	public function addJS($path, $includeInFooter = false)
-	{
+	public function addJS($path, $includeInFooter = false) {
 		if ($includeInFooter === 1) {
 			$includeJs = 'includeJSFooter.';
 		} else {

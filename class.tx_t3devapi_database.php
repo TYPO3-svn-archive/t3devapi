@@ -35,11 +35,10 @@
 class tx_t3devapi_database
 {
 	/**
-	 * tx_t3devapi_database::__construct()
+	 * Constructor
 	 */
 
-	function __construct()
-	{
+	function __construct() {
 	}
 
 
@@ -51,8 +50,7 @@ class tx_t3devapi_database
 	 * @see exec_SELECTquery()
 	 */
 
-	function exec_SELECT_queryArray($queryParts, $debug)
-	{
+	function exec_SELECT_queryArray($queryParts, $debug) {
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECT_queryArray($queryParts);
 
 		if (($GLOBALS['TYPO3_DB']->sql_error()) || ($debug === true)) {
@@ -75,8 +73,7 @@ class tx_t3devapi_database
 	 * @see exec_SELECTquery()
 	 */
 
-	function SELECT_queryArray($queryParts)
-	{
+	function SELECT_queryArray($queryParts) {
 		return $GLOBALS['TYPO3_DB']->SELECTquery(
 			$queryParts['SELECT'],
 			$queryParts['FROM'],
@@ -100,8 +97,7 @@ class tx_t3devapi_database
 	 * @return array
 	 */
 
-	function getAllResults($res, $table, $convertData = true)
-	{
+	function getAllResults($res, $table, $convertData = true) {
 		$first = 1;
 		$recordList = array();
 		while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
@@ -133,8 +129,7 @@ class tx_t3devapi_database
 	 * @return array
 	 */
 
-	function formatAllResults($res, $table, $title)
-	{
+	function formatAllResults($res, $table, $title) {
 		$content = '';
 
 		$content .= '<table cellspacing="1" cellpadding="2" border="0" class="typo3-dblist">';
@@ -176,8 +171,7 @@ class tx_t3devapi_database
 	 * @return array
 	 */
 
-	function getResultRowTitles($row, $table)
-	{
+	function getResultRowTitles($row, $table) {
 		global $TCA;
 		$tableHeader = array();
 		$conf = $TCA[$table];
@@ -195,8 +189,7 @@ class tx_t3devapi_database
 	 * @return array
 	 */
 
-	function getResultRow($row, $table)
-	{
+	function getResultRow($row, $table) {
 		$record = array();
 		foreach ($row as $fieldName => $fieldValue) {
 			if ((TYPO3_MODE == 'FE')) {

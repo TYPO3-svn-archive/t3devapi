@@ -39,13 +39,12 @@ class tx_t3devapi_config
 	protected $cObj = null;
 
 	/**
-	 * tx_t3devapi_config::__construct()
+	 * Constructor
 	 *
 	 * @param mixed $pObj
 	 */
 
-	function __construct($pObj)
-	{
+	function __construct($pObj) {
 		$this->cObj = $pObj->cObj;
 		$this->conf = $pObj->conf;
 	}
@@ -57,8 +56,7 @@ class tx_t3devapi_config
 	 * @return
 	 */
 
-	function getArrayConfig($debug = false)
-	{
+	function getArrayConfig($debug = false) {
 		// TYPOSCRIPT = template with plugin.tx_xxxx_pi1.xxxx = xxxx
 		$arrayConfig = $this->conf;
 
