@@ -159,18 +159,27 @@ class tx_t3devapi_pibase extends tslib_pibase
 	/*************************************** CSS ***************************************/
 
 	public function addCSS($path) {
-		$GLOBALS['TSFE']->pSetup['includeCSS.'] [] = trim($path);
+		if ($this->cObj->getUserObjectType() == tslib_cObj::OBJECTTYPE_USER_INT) {
+			$GLOBALS['TSFE']->additionalHeaderData[$this->extKey . 'css'] = '<link rel="stylesheet" type="text/css" href="' . trim($path) . '" media="all">';
+		} else {
+			$GLOBALS['TSFE']->pSetup['includeCSS.'][$this->extKey] = trim($path);
+			$GLOBALS['TSFE']->pSetup['includeCSS.'][$this->extKey . '.'] = array('media' => 'screen');
+		}
 	}
 
 	/*************************************** JS ***************************************/
 
 	public function addJS($path, $includeInFooter = false) {
-		if ($includeInFooter === 1) {
-			$includeJs = 'includeJSFooter.';
+		if ($this->cObj->getUserObjectType() == tslib_cObj::OBJECTTYPE_USER_INT) {
+			$GLOBALS['TSFE']->additionalHeaderData[$this->extKey . 'js'] = '<script src="' . trim($path) . '" type="text/javascript"></script>';
 		} else {
-			$includeJs = 'includeJS.';
+			if ($includeInFooter === 1) {
+				$includeJs = 'includeJSFooter.';
+			} else {
+				$includeJs = 'includeJS.';
+			}
+			$GLOBALS['TSFE']->pSetup[$includeJs] [] = trim($path);
 		}
-		$GLOBALS['TSFE']->pSetup[$includeJs] [] = trim($path);
 	}
 
 }
