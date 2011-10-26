@@ -1,37 +1,39 @@
 <?php
 
-/* * *************************************************************
-*
-* Copyright notice
-*
-* (c) 2010 Yohann CERDAN <ycerdan@onext.fr>
-* All rights reserved
-*
-* This script is part of the TYPO3 project. The TYPO3 project is
-* free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* The GNU General Public License can be found at
-* http://www.gnu.org/copyleft/gpl.html.
-*
-* This script is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* This copyright notice MUST APPEAR in all copies of the script!
-* ************************************************************* */
+/***************************************************************
+ *  Copyright notice
+ *
+ *  (c) 2011 Yohann CERDAN <cerdanyohann@yahoo.fr>
+ *  All rights reserved
+ *
+ *  This script is part of the TYPO3 project. The TYPO3 project is
+ *  free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  The GNU General Public License can be found at
+ *  http://www.gnu.org/copyleft/gpl.html.
+ *  A copy is found in the textfile GPL.txt and important notices to the license
+ *  from the author is found in LICENSE.txt distributed with these scripts.
+ *
+ *
+ *  This script is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  This copyright notice MUST APPEAR in all copies of the script!
+ ***************************************************************/
 
 /**
  * tx_t3devapi_miscellaneous
  * Class with a lot of functions :-)
  *
- * @author Yohann
- * @copyright Copyright (c) 2011
+ * @author Yohann CERDAN <cerdanyohann@yahoo.fr>
+ * @package TYPO3
+ * @subpackage t3devapi
  */
-
 class tx_t3devapi_miscellaneous
 {
 	// Parent object
@@ -102,6 +104,9 @@ class tx_t3devapi_miscellaneous
 	public function getURL($additionalParamsArray = array(), $cache = 0, $altPageId = 0) {
 		$conf = array();
 		$conf['useCacheHash'] = $cache;
+		if ($this->pObj->cObj->getUserObjectType() == tslib_cObj::OBJECTTYPE_USER_INT) {
+			$conf['useCacheHash'] = 0;
+		}
 		$conf['no_cache'] = 0;
 		$conf['returnLast'] = 'url';
 		$conf['parameter'] = $altPageId ? $altPageId : $GLOBALS['TSFE']->id;
@@ -122,6 +127,9 @@ class tx_t3devapi_miscellaneous
 	public function getTypolink($additionalParamsArray = array(), $cache = 0, $altPageId = 0, $label) {
 		$conf = array();
 		$conf['useCacheHash'] = $cache;
+		if ($this->pObj->cObj->getUserObjectType() == tslib_cObj::OBJECTTYPE_USER_INT) {
+			$conf['useCacheHash'] = 0;
+		}
 		$conf['no_cache'] = 0;
 		$conf['parameter'] = $altPageId ? $altPageId : $GLOBALS['TSFE']->id;
 		$conf['additionalParams'] = t3lib_div::implodeArrayForUrl('', $additionalParamsArray, '', 1);
@@ -368,13 +376,18 @@ class tx_t3devapi_miscellaneous
 	 * @return
 	 */
 
-	public function getPiVars($exclude = '') {
+	public function getPiVars($exclude = '', $prefix = FALSE) {
+		$piVars = array();
 		foreach ($this->pObj->piVars as $piVar => $piVarvalue) {
-			if (t3lib_div::inList($exclude, $piVar)) {
-				unset($this->pObj->piVars[$piVar]);
+			if (!t3lib_div::inList($exclude, $piVar)) {
+				if ($prefix === TRUE) {
+					$piVars[$this->pObj->prefixId . '[' . $piVar . ']'] = $piVarvalue;
+				} else {
+					$piVars[$piVar] = $piVarvalue;
+				}
 			}
 		}
-		return $this->pObj->piVars;
+		return $piVars;
 	}
 
 	/**
@@ -613,47 +626,49 @@ class tx_t3devapi_miscellaneous
 	}
 
 	/**
-	 * Send a HTML mail using t3lib_htmlmail
-	 *
-	 * @param mixed $content
-	 * @param mixed $title
-	 * @param mixed $recipient
-	 * @param mixed $fromEmail
-	 * @param mixed $fromName
-	 * @param string $replyTo
-	 * @return
+	 * Send a email using t3lib_htmlmail
 	 */
 
-	public function sendHTMLMail($content, $title, $recipient, $fromEmail, $fromName, $replyTo = '') {
-		if (trim($recipient) && trim($content)) {
-			$subject = $title;
-			$Typo3_htmlmail = t3lib_div::makeInstance('t3lib_htmlmail');
-			$Typo3_htmlmail->start();
-			$Typo3_htmlmail->useBase64();
-			$Typo3_htmlmail->subject = $subject;
-			$Typo3_htmlmail->from_email = $fromEmail;
-			$Typo3_htmlmail->from_name = $fromName;
-			$Typo3_htmlmail->replyto_email = $replyTo ? $replyTo : $fromEmail;
-			$Typo3_htmlmail->replyto_name = $replyTo ? '' : $fromName;
-			$Typo3_htmlmail->organisation = '';
-			$Typo3_htmlmail->priority = 3;
-			// HTML
-			$Typo3_htmlmail->theParts['html']['content'] = $content; // Fetches the content of the page
-			$Typo3_htmlmail->theParts['html']['path'] = '';
-			$Typo3_htmlmail->extractMediaLinks();
-			$Typo3_htmlmail->extractHyperLinks();
-			$Typo3_htmlmail->fetchHTMLMedia();
-			$Typo3_htmlmail->substMediaNamesInHTML(0); // 0 = relative
-			$Typo3_htmlmail->substHREFsInHTML();
-			$Typo3_htmlmail->setHTML($Typo3_htmlmail->encodeMsg($Typo3_htmlmail->theParts['html']['content']));
-			// PLAIN
-			$Typo3_htmlmail->addPlain('');
-			// SET Headers and Content
-			$Typo3_htmlmail->setHeaders();
-			$Typo3_htmlmail->setContent();
-			$Typo3_htmlmail->setRecipient($recipient);
-			return $Typo3_htmlmail->sendtheMail();
+	public function sendEmail($to, $subject, $message, $type = 'plain', $fromEmail = '', $fromName = '', $charset = 'iso-8859-1', $files = array()) {
+		// send mail
+		$mail = t3lib_div::makeInstance('t3lib_htmlmail');
+		$mail->start();
+		$mail->useBase64();
+		$mail->charset = 'iso-8859-1';
+		$mail->subject = $subject;
+		// from
+		$mail->from_email = $fromEmail;
+		$mail->from_name = $fromName;
+		// replyTo
+		$mail->replyto_email = $fromEmail;
+		$mail->replyto_name = $fromName;
+		// recipients
+		$mail->setRecipient($to);
+		// add Plain
+		if ($type == 'plain') {
+			$mail->addPlain($message);
 		}
+		// add HTML
+		if ($type == 'html') {
+			$mail->theParts['html']['content'] = $message;
+			$mail->theParts['html']['path'] = '';
+			$mail->extractMediaLinks();
+			$mail->extractHyperLinks();
+			$mail->fetchHTMLMedia();
+			$mail->substMediaNamesInHTML(0); // 0 = relative
+			$mail->substHREFsInHTML();
+			$mail->setHtml($mail->encodeMsg($mail->theParts['html']['content']));
+		}
+		// add Files
+		if (!empty($files)) {
+			foreach ($files as $file) {
+				$mail->addAttachment($file);
+			}
+		}
+		// send
+		$mail->setHeaders();
+		$mail->setContent();
+		return $mail->sendtheMail();
 	}
 
 	/**

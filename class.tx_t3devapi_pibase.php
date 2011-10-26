@@ -1,37 +1,39 @@
 <?php
 
-/* * *************************************************************
-*
-* Copyright notice
-*
-* (c) 2011 Yohann CERDAN <ycerdan@onext.fr>
-* All rights reserved
-*
-* This script is part of the TYPO3 project. The TYPO3 project is
-* free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* The GNU General Public License can be found at
-* http://www.gnu.org/copyleft/gpl.html.
-*
-* This script is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* This copyright notice MUST APPEAR in all copies of the script!
-* ************************************************************* */
+/***************************************************************
+ *  Copyright notice
+ *
+ *  (c) 2011 Yohann CERDAN <cerdanyohann@yahoo.fr>
+ *  All rights reserved
+ *
+ *  This script is part of the TYPO3 project. The TYPO3 project is
+ *  free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  The GNU General Public License can be found at
+ *  http://www.gnu.org/copyleft/gpl.html.
+ *  A copy is found in the textfile GPL.txt and important notices to the license
+ *  from the author is found in LICENSE.txt distributed with these scripts.
+ *
+ *
+ *  This script is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  This copyright notice MUST APPEAR in all copies of the script!
+ ***************************************************************/
 
 /**
  * tx_t3devapi_pibase
  * Class base of a plugin
  *
- * @author Yohann
- * @copyright Copyright (c) 2011
+ * @author Yohann CERDAN <cerdanyohann@yahoo.fr>
+ * @package TYPO3
+ * @subpackage t3devapi
  */
-
 class tx_t3devapi_pibase
 {
 	public $cObj = NULL;
@@ -134,6 +136,23 @@ class tx_t3devapi_pibase
 	}
 
 	/**
+	 * Get records from a list of uids
+	 *
+	 * @param $from
+	 * @param $uid
+	 * @param string $select
+	 * @return array
+	 */
+
+	public function getRecords($from, $uids, $select = '*') {
+		$query['SELECT'] = $select;
+		$query['FROM'] = $from;
+		$query['WHERE'] = 'uid IN (' . mysql_real_escape_string($uids) . ')';
+		$rows = tx_t3devapi_database::exec_SELECTgetRows($query, $this->conf['debug']);
+		return $rows;
+	}
+
+	/**
 	 * Returns a part of a WHERE clause which will filter out records with start/end times or hidden/fe_groups fields
 	 * it also add a where condition if $this->conf['pidList'] is not empty
 	 *
@@ -210,8 +229,10 @@ class tx_t3devapi_pibase
 	 */
 
 	public function profileStart() {
-		$this->profile['parsetime'] = microtime(TRUE);
-		$this->profile['mem'] = tx_t3devapi_miscellaneous::getMemoryUsage();
+		if ($this->conf['profile'] === TRUE) {
+			$this->profile['parsetime'] = microtime(TRUE);
+			$this->profile['mem'] = tx_t3devapi_miscellaneous::getMemoryUsage();
+		}
 	}
 
 	/**
@@ -221,9 +242,12 @@ class tx_t3devapi_pibase
 	 */
 
 	public function profileStop() {
-		$this->profile['parsetime'] = (microtime(TRUE) - $this->profile['parsetime']) . ' ms';
-		$this->profile['mem'] = tx_t3devapi_miscellaneous::getMemoryUsage() - $this->profile['mem'] . ' ko (total:' . tx_t3devapi_miscellaneous::getMemoryUsage() . 'ko)';
-		$content = $this->profile['parsetime'] . ' / ' . $this->profile['mem'];
+		$content = '';
+		if ($this->conf['profile'] === TRUE) {
+			$this->profile['parsetime'] = (microtime(TRUE) - $this->profile['parsetime']) . ' ms';
+			$this->profile['mem'] = tx_t3devapi_miscellaneous::getMemoryUsage() - $this->profile['mem'] . ' ko (total:' . tx_t3devapi_miscellaneous::getMemoryUsage() . 'ko)';
+			$content = $this->profile['parsetime'] . ' / ' . $this->profile['mem'];
+		}
 		return $content;
 	}
 
@@ -267,12 +291,12 @@ class tx_t3devapi_pibase
 	 * @return void
 	 */
 
-	public function addCSS($path) {
+	public function addCSS($path, $id = '') {
 		if ($this->cObj->getUserObjectType() == tslib_cObj::OBJECTTYPE_USER_INT) {
-			$GLOBALS['TSFE']->additionalHeaderData[$this->extKey . 'css'] = '<link rel="stylesheet" type="text/css" href="' . trim($path) . '" media="all">';
+			$GLOBALS['TSFE']->additionalHeaderData[$this->extKey . $id . 'css'] = '<link rel="stylesheet" type="text/css" href="' . trim($path) . '" media="all">';
 		} else {
-			$GLOBALS['TSFE']->pSetup['includeCSS.'][$this->extKey] = trim($path);
-			$GLOBALS['TSFE']->pSetup['includeCSS.'][$this->extKey . '.'] = array('media' => 'screen');
+			$GLOBALS['TSFE']->pSetup['includeCSS.'][$this->extKey . $id] = trim($path);
+			$GLOBALS['TSFE']->pSetup['includeCSS.'][$this->extKey . $id . '.'] = array('media' => 'screen');
 		}
 	}
 
@@ -283,9 +307,9 @@ class tx_t3devapi_pibase
 	 * @return void
 	 */
 
-	public function addJS($path, $includeInFooter = FALSE) {
+	public function addJS($path, $includeInFooter = FALSE, $id = '') {
 		if ($this->cObj->getUserObjectType() == tslib_cObj::OBJECTTYPE_USER_INT) {
-			$GLOBALS['TSFE']->additionalHeaderData[$this->extKey . 'js'] = '<script src="' . trim($path) . '" type="text/javascript"></script>';
+			$GLOBALS['TSFE']->additionalHeaderData[$this->extKey . $id . 'js'] = '<script src="' . trim($path) . '" type="text/javascript"></script>';
 		} else {
 			if ($includeInFooter === 1) {
 				$includeJs = 'includeJSFooter.';
@@ -294,6 +318,154 @@ class tx_t3devapi_pibase
 			}
 			$GLOBALS['TSFE']->pSetup[$includeJs] [] = trim($path);
 		}
+	}
+
+	/*************************************** DISPLAY LIST ***************************************/
+
+	/**
+	 * Create a list view
+	 * Exemple : $this->displayList('getAllItems', 'processItemList', 'listExtraGlobalMarker', 'ITEMS_LIST');
+	 *
+	 * @param $getAllItems function who return the SQL ressource
+	 * @param $processItemList function who process each record
+	 * @param $listExtraGlobalMarker function who process the global array
+	 * @param $globalSubPart global subpart
+	 * @return string HTML code
+	 */
+
+	public function displayList($getAllItems, $processItemList, $listExtraGlobalMarker, $globalSubPart) {
+		$res = $this->$getAllItems();
+
+		if ($this->conf['records']['nbrecordsall'] == 0) {
+			return $this->pi_getLL('noresults');
+		}
+
+		// process part
+
+		$iItem = 1;
+		$markerArrayItems = array();
+
+		while ($item = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
+			$item['ii'] = $this->conf['records']['offset'] + $iItem;
+			$item['i'] = $iItem++;
+			if ($processItemList !== NULL) {
+				$item = $this->$processItemList($item);
+			}
+			$markerArrayItems[] = array_merge($this->misc->convertToMarkerArray($item), $this->conf['markerslocallang']);
+		}
+
+		$this->conf['records']['recordsto'] = $this->conf['records']['offset'] + ($iItem - 1);
+		$this->conf['records']['recordsfrom'] = $this->conf['records']['offset'] + 1;
+
+		$GLOBALS['TYPO3_DB']->sql_free_result($res);
+
+		// render part
+
+		$markerArrayGlobal = array();
+		$markerArrayGlobal['###PAGEBROWSER###'] = '';
+
+		if (($this->conf['enablePageBrowser'] == 1) && ($this->conf['pageBrowserNbRecords'] > 0)) {
+			$markerArrayGlobal['###PAGEBROWSER###'] = $this->getHTMLPageBrowser($this->conf['records']['nbpages']);
+		}
+
+		$markerArrayGlobal['###' . $globalSubPart . '_ITEM###'] = $this->template->renderAllTemplate($markerArrayItems, '###' . $globalSubPart . '_ITEM###', $this->conf['debug']);
+
+		if ($listExtraGlobalMarker !== NULL) {
+			$markerArrayGlobal = array_merge($markerArrayGlobal, $this->misc->convertToMarkerArray($this->$listExtraGlobalMarker()), $this->misc->convertToMarkerArray($this->conf['records']), $this->conf['markerslocallang']);
+		} else {
+			$markerArrayGlobal = array_merge($markerArrayGlobal, $this->misc->convertToMarkerArray($this->conf['records']), $this->conf['markerslocallang']);
+		}
+
+		$content = $this->template->renderAllTemplate($markerArrayGlobal, '###' . $globalSubPart . '###', $this->conf['debug']);
+
+		return $content;
+	}
+
+	/**
+	 * Create a list view
+	 * Same as displayList but with an array of records
+	 * Exemple : $this->displayList('getAllItems', 'processItemList', 'listExtraGlobalMarker', 'ITEMS_LIST');
+	 *
+	 * @param $getAllItems function who return an array of records
+	 * @param $processItemList function who process each record
+	 * @param $listExtraGlobalMarker function who process the global array
+	 * @param $globalSubPart global subpart
+	 * @return string HTML code
+	 */
+
+	public function displayListRows($getAllItems, $processItemList, $listExtraGlobalMarker, $globalSubPart) {
+		if (is_array($getAllItems)) {
+			$items = $getAllItems;
+			$this->conf['records']['nbrecordsall'] = count($items);
+		} else {
+			$items = $this->$getAllItems();
+		}
+
+		if ($this->conf['records']['nbrecordsall'] == 0) {
+			return $this->pi_getLL('noresults');
+		}
+
+		// process part
+
+		$iItem = 1;
+		$markerArrayItems = array();
+
+		foreach ($items as $item) {
+			$item['ii'] = $this->conf['records']['offset'] + $iItem;
+			$item['i'] = $iItem++;
+			if ($processItemList !== NULL) {
+				$item = $this->$processItemList($item);
+			}
+			$markerArrayItems[] = array_merge($this->misc->convertToMarkerArray($item), $this->conf['markerslocallang']);
+		}
+
+		$this->conf['records']['recordsto'] = $this->conf['records']['offset'] + ($iItem - 1);
+		$this->conf['records']['recordsfrom'] = $this->conf['records']['offset'] + 1;
+
+		// render part
+
+		$markerArrayGlobal = array();
+		$markerArrayGlobal['###PAGEBROWSER###'] = '';
+
+		if (($this->conf['enablePageBrowser'] == 1) && ($this->conf['pageBrowserNbRecords'] > 0)) {
+			$markerArrayGlobal['###PAGEBROWSER###'] = $this->getHTMLPageBrowser($this->conf['records']['nbpages']);
+		}
+
+		$markerArrayGlobal['###' . $globalSubPart . '_ITEM###'] = $this->template->renderAllTemplate($markerArrayItems, '###' . $globalSubPart . '_ITEM###', $this->conf['debug']);
+
+		if ($listExtraGlobalMarker !== NULL) {
+			$markerArrayGlobal = array_merge($markerArrayGlobal, $this->misc->convertToMarkerArray($this->$listExtraGlobalMarker()), $this->misc->convertToMarkerArray($this->conf['records']), $this->conf['markerslocallang']);
+		} else {
+			$markerArrayGlobal = array_merge($markerArrayGlobal, $this->misc->convertToMarkerArray($this->conf['records']), $this->conf['markerslocallang']);
+		}
+
+		$content = $this->template->renderAllTemplate($markerArrayGlobal, '###' . $globalSubPart . '###', $this->conf['debug']);
+
+		return $content;
+	}
+
+	/*************************************** DISPLAY SINGLE ***************************************/
+
+	/**
+	 * Create a single view
+	 *
+	 * @param $uid uid of the record
+	 * @param $getItem function who return the SQL ressource
+	 * @param $processItem  function who process record
+	 * @param $singleExtraGlobalMarker function who process the global array
+	 * @param $globalSubPart global subpart
+	 * @return string HTML code
+	 */
+
+	public function displaySingle($uid, $getItem, $processItem, $singleExtraGlobalMarker, $globalSubPart) {
+		$item = $this->$getItem($uid);
+		if ($processItem !== NULL) {
+			$item = $this->$processItem($item);
+		}
+		if ($singleExtraGlobalMarker === NULL) {
+			$singleExtraGlobalMarker = array();
+		}
+		return $this->template->renderAllTemplate(array_merge($this->$singleExtraGlobalMarker(), $this->misc->convertToMarkerArray($item), $this->conf['markerslocallang']), '###' . $globalSubPart . '###', $this->conf['debug']);
 	}
 
 	/*************************************** FLEXFORMS ***************************************/
@@ -422,14 +594,23 @@ class tx_t3devapi_pibase
 			$newContent = '<!-- BEGIN: plugin "' . $this->prefixId . '" -->';
 			$newContent .= $content;
 			$newContent .= '<!-- END: plugin "' . $this->prefixId;
-			if ($this->conf['profile'] === TRUE) {
-				$newContent .= ' / ' . $this->profileStop();
-			}
+			$newContent .= ' / ' . $this->profileStop();
 			$newContent .= '-->';
 			return $newContent;
 		}
 
 		return $content;
+	}
+
+	/**
+	 * Get a prefixed variable
+	 *
+	 * @param $value a variable
+	 * @return string
+	 */
+
+	public function getPrefix($value) {
+		return $this->prefixId . '[' . $value . ']';
 	}
 
 }
