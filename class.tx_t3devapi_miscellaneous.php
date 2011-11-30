@@ -37,7 +37,7 @@
 class tx_t3devapi_miscellaneous
 {
 	// Parent object
-	protected $cpObj = NULL;
+	protected $pObj = NULL;
 
 	/**
 	 * Class constructor
@@ -814,6 +814,45 @@ class tx_t3devapi_miscellaneous
 			}
 			$GLOBALS['TSFE']->newCObj();
 		}
+	}
+
+	/**
+	 * Returns given word as CamelCased.
+	 *
+	 * Converts a word like "send_email" to "SendEmail". It
+	 * will remove non alphanumeric characters from the word, so
+	 * "who's online" will be converted to "WhoSOnline"
+	 *
+	 * @param	string	Word to convert to camel case
+	 * @return	string	UpperCamelCasedWord
+	 */
+
+	public static function camelize($word) {
+		return str_replace(' ', '', ucwords(preg_replace('![^A-Z^a-z^0-9]+!', ' ', $word)));
+	}
+
+	/**
+	 * Returns a given CamelCasedString as an lowercase string with underscores.
+	 * Example: Converts BlogExample to blog_example, and minimalValue to minimal_value
+	 *
+	 * @param	string		$string: String to be converted to lowercase underscore
+	 * @return	string		lowercase_and_underscored_string
+	 */
+
+	public static function camelCaseToLowerCaseUnderscored($string) {
+		return strtolower(preg_replace('/(?<=\w)([A-Z])/', '_\\1', $string));
+	}
+
+	/**
+	 * Returns a given string with underscores as UpperCamelCase.
+	 * Example: Converts blog_example to BlogExample
+	 *
+	 * @param	string		$string: String to be converted to camel case
+	 * @return	string		UpperCamelCasedWord
+	 */
+
+	public static function underscoredToUpperCamelCase($string) {
+		return str_replace(' ', '', ucwords(str_replace('_', ' ', strtolower($string))));
 	}
 
 }

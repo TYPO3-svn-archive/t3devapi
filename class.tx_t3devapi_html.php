@@ -28,13 +28,8 @@
 
 /**
  * tx_t3devapi_html
- * Class to create some html element with some php objects
- * Example :
- *
- * $myImage = new tx_t3devapi_html('img', array('src' => 'http://www.google.fr/intl/en_fr/images/logo.gif'));
- * $myAnchor = new tx_t3devapi_html('a', array('href' => 'http://google.fr', 'title' => 'Google'), array($myImage));
- * $myDiv = new tx_t3devapi_html('div', '', array($myAnchor));
- * echo $myDiv->output();
+ * Class to create some html element
+ * based on tx_t3devapi_tagbuilder
  *
  * @author Yohann CERDAN <cerdanyohann@yahoo.fr>
  * @package TYPO3
@@ -42,174 +37,6 @@
  */
 class tx_t3devapi_html
 {
-	/**
-	 *
-	 * @var tag type
-	 * @access protected
-	 */
-	protected $type;
-	/**
-	 *
-	 * @var tag attributes
-	 * @access protected
-	 */
-	protected $attributes;
-	/**
-	 *
-	 * @var tag text
-	 * @access protected
-	 */
-	protected $text = FALSE;
-	/**
-	 *
-	 * @var tag closers
-	 * @access protected
-	 */
-	protected $selfClosers = array('input', 'img', 'hr', 'br', 'meta', 'link');
-
-	/**
-	 * This is the class constructor.
-	 * It allows to set up the tag type, attributes, childs and text
-	 *
-	 * @param string $type
-	 * @param string $attribute
-	 * @param string $objects
-	 * @param string $text
-	 */
-	public function __construct($type, $attribute = '', $objects = '', $text = '') {
-		// Set the type
-		$this->type = strtolower($type);
-		$this->attributes = array();
-		// Set attributes
-		if (is_array($attribute)) {
-			$this->setAttributes($attribute);
-		}
-		// Inject HTML into parent
-		if (is_array($objects)) {
-			$this->inject($objects);
-		}
-		// Set tag text
-		if ($text) {
-			$this->setText($text);
-		}
-	}
-
-	/**
-	 * Returns the value of an attribute
-	 *
-	 * @param string $attribute
-	 * @return array
-	 */
-
-	public function getAttributes($attribute) {
-		return $this->attributes[$attribute];
-	}
-
-	/**
-	 * Set the value of an attribute
-	 *
-	 * @param array $attributeArr
-	 * @return void
-	 */
-
-	public function setAttributes($attributeArr) {
-		$this->attributes = array_merge($this->attributes, $attributeArr);
-	}
-
-	/**
-	 * Set the text between opening and closing tag
-	 * Tag must be text only
-	 *
-	 * @param string $text
-	 * @return void
-	 */
-
-	public function setText($text) {
-		if (is_string($text)) {
-			$this->text = $text;
-		}
-	}
-
-	/**
-	 * Remove an attribute
-	 *
-	 * @param string $attribute
-	 * @return void
-	 */
-
-	public function remove($attribute) {
-		if (isset($this->attributes[$attribute])) {
-			unset($this->attributes[$attribute]);
-		}
-	}
-
-	/**
-	 * Clear all attributes
-	 *
-	 * @return void
-	 */
-
-	public function clear() {
-		$this->attributes = array();
-	}
-
-	/**
-	 * Insert an array of child nodes into parent.
-	 * Format code with an indent of 2 whitespace for childs nodes
-	 *
-	 * @param array $objectArr
-	 * @return void
-	 */
-
-	public function inject($objectArr) {
-		foreach ($objectArr as $object) {
-			if (get_class($object) == get_class($this)) {
-				$this->attributes['text'] .= $object->build();
-			}
-		}
-	}
-
-	/**
-	 * Print the html
-	 *
-	 * @return string
-	 */
-
-	public function output() {
-		return $this->build();
-	}
-
-	/**
-	 * Build the HTML node
-	 *
-	 * @return string
-	 */
-
-	protected function build() {
-		// start
-		$build = '<' . $this->type;
-		// add attributes
-		if (count($this->attributes)) {
-			foreach ($this->attributes as $key => $value) {
-				if ($key != 'text') {
-					$build .= ' ' . $key . '="' . $value . '"';
-				}
-			}
-		}
-		// closing
-		if (!in_array($this->type, $this->selfClosers)) {
-			// Parent node cannot have text
-			if (is_string($this->text)) {
-				$build .= '>' . $this->text . '</' . $this->type . '>';
-			} else {
-				$build .= '>' . $this->attributes['text'] . '</' . $this->type . '>';
-			}
-		} else {
-			$build .= ' />';
-		}
-		// return it
-		return $build;
-	}
 
 	/**
 	 * Render a label
@@ -220,8 +47,11 @@ class tx_t3devapi_html
 	 */
 
 	public function renderLabel($for, $content) {
-		$element = new tx_t3devapi_html('label', array('for' => $for), NULL, $content);
-		return $element->output();
+		$tag = new tx_t3devapi_tagbuilder();
+		$tag->setTagName('label');
+		$tag->addAttribute('for', self::cleanId($for));
+		$tag->setContent($content);
+		return $tag->render();
 	}
 
 	/**
@@ -235,16 +65,18 @@ class tx_t3devapi_html
 	 */
 
 	public function renderInput($type, $name, $value = '', $attributes = array()) {
+		$tag = new tx_t3devapi_tagbuilder();
+		$tag->setTagName('input');
+		$tag->addAttribute('type', $type);
 		if (!isset($attributes['name'])) {
-			$attributes['name'] = $name;
+			$tag->addAttribute('name', $name);
 		}
 		if (!isset($attributes['id'])) {
-			$attributes['id'] = self::cleanId($name);
+			$tag->addAttribute('id', self::cleanId($name));
 		}
-		$attributes['type'] = $type;
-		$attributes['value'] = $value;
-		$element = new tx_t3devapi_html('input', $attributes);
-		return $element->output();
+		$tag->addAttribute('value', $value);
+		$tag->addAttributes($attributes);
+		return $tag->render();
 	}
 
 	/**
@@ -326,6 +158,28 @@ class tx_t3devapi_html
 	}
 
 	/**
+	 * Render a input type file
+	 *
+	 * @param string $name
+	 * @param array $attributes
+	 * @return string
+	 */
+
+	public function renderInputFile($name, $attributes = array()) {
+		$tag = new tx_t3devapi_tagbuilder();
+		$tag->setTagName('input');
+		$tag->addAttribute('type', 'file');
+		if (!isset($attributes['name'])) {
+			$tag->addAttribute('name', $name);
+		}
+		if (!isset($attributes['id'])) {
+			$tag->addAttribute('id', self::cleanId($name));
+		}
+		$tag->addAttributes($attributes);
+		return $tag->render();
+	}
+
+	/**
 	 * Render a textarea
 	 *
 	 * @param string $name
@@ -335,14 +189,18 @@ class tx_t3devapi_html
 	 */
 
 	public function renderTextArea($name, $value = '', $attributes = array()) {
+		$tag = new tx_t3devapi_tagbuilder();
+		$tag->setTagName('textarea');
+		$tag->forceClosingTag(TRUE);
 		if (!isset($attributes['name'])) {
-			$attributes['name'] = $name;
+			$tag->addAttribute('name', $name);
 		}
 		if (!isset($attributes['id'])) {
-			$attributes['id'] = self::cleanId($name);
+			$tag->addAttribute('id', self::cleanId($name));
 		}
-		$element = new tx_t3devapi_html('textarea', $attributes, NULL, $value);
-		return $element->output();
+		$tag->setContent($value);
+		$tag->addAttributes($attributes);
+		return $tag->render();
 	}
 
 	/**
@@ -356,19 +214,23 @@ class tx_t3devapi_html
 	 */
 
 	public function renderCheckbox($name, $content, $arrayOfValues = array(), $attributes = array()) {
+		$tag = new tx_t3devapi_tagbuilder();
+		$tag->setTagName('input');
+		$tag->addAttribute('type', 'checkbox');
+		$tag->addAttribute('value', $content);
 		if (!isset($attributes['name'])) {
-			$attributes['name'] = $name;
+			$tag->addAttribute('name', $name);
 		}
 		if (!isset($attributes['id'])) {
-			$attributes['id'] = self::cleanId($name);
+			$tag->addAttribute('id', self::cleanId($name));
 		}
-		$attributes['type'] = 'checkbox';
-		$attributes['value'] = $content;
-		if (in_array($content, $arrayOfValues)) {
-			$attributes['checked'] = 'checked';
+		if (is_array($arrayOfValues)) {
+			if (in_array($content, $arrayOfValues)) {
+				$tag->addAttribute('checked', 'checked');
+			}
 		}
-		$myInput = new tx_t3devapi_html('input', $attributes);
-		return $myInput->output();
+		$tag->addAttributes($attributes);
+		return $tag->render();
 	}
 
 	/**
@@ -382,19 +244,21 @@ class tx_t3devapi_html
 	 */
 
 	public function renderRadio($name, $content, $arrayOfValues = array(), $attributes = array()) {
+		$tag = new tx_t3devapi_tagbuilder();
+		$tag->setTagName('input');
+		$tag->addAttribute('type', 'radio');
+		$tag->addAttribute('value', $content);
 		if (!isset($attributes['name'])) {
-			$attributes['name'] = $name;
+			$tag->addAttribute('name', $name);
 		}
 		if (!isset($attributes['id'])) {
-			$attributes['id'] = self::cleanId($name);
+			$tag->addAttribute('id', self::cleanId($name));
 		}
-		$attributes['type'] = 'radio';
-		$attributes['value'] = $content;
 		if (in_array($content, $arrayOfValues)) {
-			$attributes['checked'] = 'checked';
+			$tag->addAttribute('checked', 'checked');
 		}
-		$myInput = new tx_t3devapi_html('input', $attributes);
-		return $myInput->output();
+		$tag->addAttributes($attributes);
+		return $tag->render();
 	}
 
 	/**
@@ -408,29 +272,31 @@ class tx_t3devapi_html
 	 */
 
 	public function renderSelect($name, $content = array(), $value = '', $attributes = array()) {
-		$myOptions = array();
-		$fillSelected = FALSE;
-		foreach ($content as $key => $entry) {
-			$optionAttributes = array();
-			$optionAttributes['value'] = $key;
-			if ($value == '' && ($fillSelected == FALSE)) {
-				$optionAttributes['selected'] = 'selected';
-				$fillSelected = TRUE;
-			}
-			if (($value == $key) && ($fillSelected == FALSE)) {
-				$optionAttributes['selected'] = 'selected';
-				$fillSelected = TRUE;
-			}
-			$myOptions[] = new tx_t3devapi_html('option', $optionAttributes, '', $entry);
-		}
+		$tag = new tx_t3devapi_tagbuilder();
+		$tag->forceClosingTag(TRUE);
+		$tag->setTagName('select');
 		if (!isset($attributes['name'])) {
-			$attributes['name'] = $name;
+			$tag->addAttribute('name', $name);
 		}
 		if (!isset($attributes['id'])) {
-			$attributes['id'] = self::cleanId($name);
+			$tag->addAttribute('id', self::cleanId($name));
 		}
-		$mySelect = new tx_t3devapi_html('select', $attributes, $myOptions);
-		return $mySelect->output();
+		$options = '';
+		if (array_key_exists($value, $content) === FALSE) {
+			$keys = array_keys($content);
+			$value = $keys[0];
+		}
+		foreach ($content as $key => $entry) {
+			if ($value == $key) {
+				$options .= self::renderOptionTag($key, $entry, TRUE);
+			} else {
+				$options .= self::renderOptionTag($key, $entry, FALSE);
+			}
+
+		}
+		$tag->setContent($options);
+		$tag->addAttributes($attributes);
+		return $tag->render();
 	}
 
 	/**
@@ -444,26 +310,50 @@ class tx_t3devapi_html
 	 */
 
 	public function renderMultipleSelect($name, $content = array(), $arrayOfValues = array(), $attributes = array()) {
-		$myOptions = array();
-		foreach ($content as $key => $entry) {
-			$optionAttributes = array();
-			$optionAttributes['value'] = $key;
-			if (is_array($arrayOfValues)) {
-				if (in_array($key, $arrayOfValues)) {
-					$optionAttributes['selected'] = 'selected';
-				}
-			}
-			$myOptions[] = new tx_t3devapi_html('option', $optionAttributes, '', $entry);
-		}
+		$tag = new tx_t3devapi_tagbuilder();
+		$tag->forceClosingTag(TRUE);
+		$tag->setTagName('select');
+		$tag->addAttribute('multiple', 'multiple');
 		if (!isset($attributes['name'])) {
-			$attributes['name'] = $name;
+			$tag->addAttribute('name', $name);
 		}
 		if (!isset($attributes['id'])) {
-			$attributes['id'] = self::cleanId($name);
+			$tag->addAttribute('id', self::cleanId($name));
 		}
-		$attributes['multiple'] = 'true';
-		$mySelect = new tx_t3devapi_html('select', $attributes, $myOptions);
-		return $mySelect->output();
+		$options = '';
+		foreach ($content as $key => $entry) {
+			if (is_array($arrayOfValues)) {
+				if (in_array($key, $arrayOfValues)) {
+					$options .= self::renderOptionTag($key, $entry, TRUE);
+				} else {
+					$options .= self::renderOptionTag($key, $entry, FALSE);
+				}
+			} else {
+				$options .= self::renderOptionTag($key, $entry, FALSE);
+			}
+		}
+		$tag->setContent($options);
+		$tag->addAttributes($attributes);
+		return $tag->render();
+	}
+
+	/**
+	 * Render one option tag
+	 *
+	 * @param string $value value attribute of the option tag (will be escaped)
+	 * @param string $label content of the option tag (will be escaped)
+	 * @param boolean $isSelected specifies wheter or not to add selected attribute
+	 * @return string the rendered option tag
+	 */
+
+	public function renderOptionTag($value, $label, $isSelected) {
+		$output = '<option value="' . htmlspecialchars($value) . '"';
+		if ($isSelected) {
+			$output .= ' selected="selected"';
+		}
+		$output .= '>' . htmlspecialchars($label) . '</option>';
+
+		return $output;
 	}
 
 	/**
@@ -474,12 +364,16 @@ class tx_t3devapi_html
 	 */
 
 	public function cleanId($text) {
-		return preg_replace('/(\[|\])*/', '', $text);
+		$text = preg_replace('/\[\]/', '', $text);
+		$text = preg_replace('/\]/', '', $text);
+		$text = preg_replace('/\[/', '_', $text);
+		return $text;
+		//return preg_replace('/(\[|\])*/', '', $text);
 	}
 
 
 }
 
-tx_t3devapi_miscellaneous::XCLASS('ext/t3devapi/class.tx_t3devapi_htmlelement.php');
+tx_t3devapi_miscellaneous::XCLASS('ext/t3devapi/class.tx_t3devapi_html.php');
 
 ?>

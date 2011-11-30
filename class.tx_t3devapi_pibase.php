@@ -45,6 +45,9 @@ class tx_t3devapi_pibase
 	public $profile;
 	public $conf = NULL;
 	public $template = NULL;
+	/**
+	 * @var tx_t3devapi_miscellaneous
+	 */
 	public $misc = NULL;
 
 	/**
