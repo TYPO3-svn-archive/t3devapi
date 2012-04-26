@@ -51,6 +51,7 @@ class tx_t3devapi_templating
 		// Store parent object as a class variable
 		$this->pObj = $pObj;
 		$this->misc = new tx_t3devapi_miscellaneous($pObj);
+		require_once(PATH_t3lib . 'class.t3lib_parsehtml.php');
 	}
 
 	/**
