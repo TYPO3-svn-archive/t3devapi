@@ -27,52 +27,47 @@
  ***************************************************************/
 
 /**
- * tx_t3devapi_export
- * Class to export datas
+ * Tx_T3devapi_Utility_Page
+ * Class with some page functions
  *
  * @author     Yohann CERDAN <cerdanyohann@yahoo.fr>
  * @package    TYPO3
  * @subpackage t3devapi
  */
-class tx_t3devapi_export
+class Tx_T3devapi_Utility_Page
 {
-
 	/**
-	 * Constructor
-	 */
-	public function __construct() {
-	}
-
-	/**
-	 * tx_t3devapi_export::exportRecordsToXML()
-	 * Example :
-	 * $query['SELECT'] = 'uid,title,category';
-	 * $query['FROM'] = 'tt_news';
-	 * $query['WHERE'] = '';
+	 * Find all ids from given ids and level
 	 *
-	 * @param array $query
-	 * @return string
+	 * @param string  $pidList   comma seperated list of ids
+	 * @param integer $recursive recursive levels
+	 * @return string comma seperated list of ids
 	 */
-	public function exportRecordsToXML($query) {
-		$xmlObj = t3lib_div::makeInstance('t3lib_xml', 'typo3_export');
-		$xmlObj->setRecFields($query['FROM'], $query['SELECT']);
-		$xmlObj->renderHeader();
-		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery(
-			$query['SELECT'],
-			$query['FROM'],
-			$query['WHERE'],
-			$query['GROUPBY'],
-			$query['ORDERBY'],
-			$query['LIMIT']
-		);
-		$xmlObj->renderRecords($query['FROM'], $res);
-		$xmlObj->renderFooter();
-		$GLOBALS['TYPO3_DB']->sql_free_result($res);
-		return $xmlObj->getResult();
+	public static function extendPidListByChildren($pidList = '', $recursive = 0) {
+		if ($recursive <= 0) {
+			return $pidList;
+		}
+
+		$cObj = t3lib_div::makeInstance('tslib_cObj');
+
+		$recursive = Tx_T3devapi_Utility_Compatibility::forceIntegerInRange($recursive, 0);
+
+		$pidList = array_unique(t3lib_div::trimExplode(',', $pidList, 1));
+
+		$result = array();
+
+		foreach ($pidList as $pid) {
+			$pid = Tx_T3devapi_Utility_Compatibility::forceIntegerInRange($pid, 0);
+			if ($pid) {
+				$children = $cObj->getTreeList(-1 * $pid, $recursive);
+				if ($children) {
+					$result[] = $children;
+				}
+			}
+		}
+
+		return implode(',', $result);
 	}
-
 }
-
-tx_t3devapi_miscellaneous::XCLASS('ext/t3devapi/class.tx_t3devapi_export.php');
 
 ?>
